@@ -80,7 +80,7 @@ int main()
 {
     try
     {
-#if 1
+#if 0
         auto file_path = "res/test.txt";
 #else
         auto file_path = "res/input.txt";
@@ -101,7 +101,7 @@ int main()
         {
             for (auto& pixel : row)
             {
-                pixel = '.';
+                pixel = ' ';
             }
         }
 
@@ -119,17 +119,25 @@ int main()
 
         auto cycle_up = [&]()
         {
-            i32 h_sprite_pos = X; // ###
+            i32 sprite_pos = X; // ###
+            i32 current_pixel = cycle;
 
-            i32 pixel_currently_being_drawn = cycle;
+            //cout << "curr pixel: " << current_pixel << endl;
+            //cout << "sprite pos: " << sprite_pos << endl;
 
-            if (h_sprite_pos - 1 == pixel_currently_being_drawn or
-                h_sprite_pos     == pixel_currently_being_drawn or
-                h_sprite_pos + 1 == pixel_currently_being_drawn)
+            i32 col = (cycle - 1) % 40;
+            //cout << "col: " << col;
+
+            if (col >= sprite_pos -1 and
+                col <= sprite_pos + 1)
             {
-                u32 row = (cycle-1) / 40;
-                u32 col = (cycle-1) % 40;
+                i32 row = (cycle - 1) / 40;
                 screen[row][col] = '#';
+                //cout << " (*)" << endl << endl;
+            }
+            else
+            {
+                //cout << endl << endl;
             }
 
             ++cycle;
@@ -158,8 +166,8 @@ int main()
             }
         }
 
-        cout << "part 2" << endl;
-        print_screen();        
+        cout << "[INFO] part 2:" << endl;
+        print_screen();
 
         return 0;
     }
