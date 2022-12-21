@@ -229,6 +229,15 @@ struct Graph
         return res;
     }
 
+    void reset()
+    {
+        for (auto& [id, vertex] : vertices)
+        {
+            vertex->dist_from_source = Inf;
+            vertex->prev = nullptr;
+        }
+    }
+
 private:
 
     u32 dist(const Vertex* from, const Vertex* to)
@@ -362,77 +371,19 @@ void part_1()
         }
     }
 
-
-    /*g.add_vertex({"1", {1,1}});
-    g.add_vertex({"2", {2,2}});
-    g.add_vertex({"3", {3,3}});
-    g.add_vertex({"4", {4,4}});
-    g.add_vertex({"5", {5,5}});
-    g.add_vertex({"6", {6,6}});*/
-
-    //// Node 1
-    //g.add_edge({1,1}, {2,2}, 7);
-    //g.add_edge({1,1}, {3,3}, 9);
-    //g.add_edge({1,1}, {6,6}, 14);
-
-    //// Node 2
-    //g.add_edge({2,2}, {1,1}, 7);
-    //g.add_edge({2,2}, {3,3}, 10);
-    //g.add_edge({2,2}, {4,4}, 15);
-
-    //// Node 3
-    //g.add_edge({3,3}, {1,1}, 9);
-    //g.add_edge({3,3}, {2,2}, 10);
-    //g.add_edge({3,3}, {4,4}, 11);
-    //g.add_edge({3,3}, {6,6}, 2);
-
-    //// Node 4
-    //g.add_edge({4,4}, {2,2}, 15);
-    //g.add_edge({4,4}, {3,3}, 11);
-    //g.add_edge({4,4}, {5,5}, 6);
-
-    //// Node 5
-    //g.add_edge({5,5}, {4,4}, 6);
-    //g.add_edge({5,5}, {6,6}, 9);
-
-    //// Node 6
-    //g.add_edge({6,6}, {1,1}, 14);
-    //g.add_edge({6,6}, {3,3}, 2);
-    //g.add_edge({6,6}, {5,5}, 9);
-
-    // Cheat Node
-    //g.add_edge({1,1}, {5,5}, 1);
-
     auto* source = g.vertices[{start.x, start.y}];
     auto* dest = g.vertices[{end.x, end.y}];
 
     g.dijkstra(*source, *dest);
 
-    // 5, 6, 1
     auto shortest_path = g.shortest_path(*source, *dest);
 
-    if (shortest_path.size() != 0)
-    {
-        std::reverse(shortest_path.begin(), shortest_path.end());
-        cout << "min path weight: " << shortest_path.back()->dist_from_source << endl;
-
-        cout << shortest_path.front()->name;
-        for (auto it = shortest_path.begin() + 1;
-             it < shortest_path.end();
-             ++it)
-        {
-            cout << " -> ";
-            cout << (*it)->name;
-        }
-        cout << endl;
-    }
-    else
+    if (shortest_path.size() == 0)
     {
         cout << "No shortest path found :(" << endl;
     }
 
-    cout << "[INFO] res part 1: " << shortest_path.size() - 1<< endl;
-
+    cout << "[INFO] res part 1: " << shortest_path.size() - 1 << endl;
 }
 
 void part_2()
@@ -448,15 +399,135 @@ void part_2()
     if (not ifs.is_open())
         throw std::runtime_error(str("[ERROR] Cannot open file ") + file_path);
 
+    vector<vector<char>> map;
+
+    V2 start, end;
+
     str line;
     while (std::getline(ifs, line))
     {
+        map.push_back({});
 
+        for (auto c : line)
+        {
+            if (c == 'S')
+            {
+                map.back().push_back('a');
+
+                start.x = map.back().size() - 1;
+                start.y = map.size() - 1;
+            }
+            else if (c == 'E')
+            {
+                map.back().push_back('z');
+
+                end.x = map.back().size() - 1;
+                end.y = map.size() - 1;
+            }
+            else
+            {
+                map.back().push_back(c);
+            }
+        }
+        map.back().shrink_to_fit();
+    }
+    map.shrink_to_fit();
+
+    auto HEIGHT = map.size();
+    auto WIDTH = map[0].size();
+
+    Graph g;
+
+    for (i32 y = 0; y < HEIGHT; ++y)
+    {
+        for (i32 x = 0; x < WIDTH; ++x)
+        {
+            auto c = map[y][x];
+            auto name = str(1, c);
+
+            g.add_vertex({name, {(i32)x, (i32)y}});
+        }
     }
 
-    cout << "[INFO] res part 2: " << endl;
-}
+    for (i32 y = 0; y < HEIGHT; ++y)
+    {
+        for (i32 x = 0; x < WIDTH; ++x)
+        {
+            // left
+            if (x - 1 >= 0)
+            {
+                int delta = map[y][x] - map[y][x - 1];
+                if (delta >= -1)
+                {
+                    g.add_edge({x,y}, {x - 1,y}, (delta == 0) ? std::abs(1) : std::abs(delta));
+                }
+            }
 
+            // right
+            if (x + 1 < WIDTH)
+            {
+                int delta = map[y][x] - map[y][x + 1];
+                if (delta >= -1)
+                {
+                    g.add_edge({x,y}, {x + 1,y}, (delta == 0) ? std::abs(1) : std::abs(delta));
+                }
+            }
+
+            // top
+            if (y - 1 >= 0)
+            {
+                int delta = map[y][x] - map[y - 1][x];
+                if (delta >= -1)
+                {
+                    g.add_edge({x,y}, {x,y - 1}, (delta == 0) ? std::abs(1) : std::abs(delta));
+                }
+            }
+
+            // bottom
+            if (y + 1 < HEIGHT)
+            {
+                int delta = map[y][x] - map[y + 1][x];
+                if (delta >= -1)
+                {
+                    g.add_edge({x,y}, {x,y + 1}, (delta == 0) ? std::abs(1) : std::abs(delta));
+                }
+            }
+        }
+    }
+
+    auto* dest = g.vertices[{end.x, end.y}];
+
+    u64 min = 0xffffffffffffffff;
+
+    for (i32 y = 0; y < HEIGHT; ++y)
+    {
+        for (i32 x = 0; x < WIDTH; ++x)
+        {
+            char c = map[y][x];
+            if (c == 'a')
+            {
+                auto* source = g.vertices[{x, y}];
+
+                g.reset();
+                g.dijkstra(*source, *dest);
+
+                auto shortest_path = g.shortest_path(*source, *dest);
+                if (shortest_path.size() != 0)
+                {
+                    if (min > shortest_path.size() - 1)
+                        min = shortest_path.size() - 1;
+                    //cout << "[INFO] res part 2: " << shortest_path.size() - 1 << endl;
+                }
+                else
+                {
+                    //cout << "No shortest path found :(" << endl;
+                }
+            }
+        }
+    }
+    
+    cout << "[INFO] res part 2: " << min << endl;
+}
 
 int main()
 {
