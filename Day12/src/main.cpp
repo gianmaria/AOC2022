@@ -163,11 +163,8 @@ struct Graph
                 return a->dist_from_source < b->dist_from_source;
             };
 
-            //std::sort(Q.begin(), Q.end(), pred);
-            //return Q.front();
-
-            auto it = std::min_element(Q.begin(), Q.end(), pred);
-            return *it;
+            std::sort(Q.begin(), Q.end(), pred);
+            return Q.front();
         };
 
         u32 alt = 0;
