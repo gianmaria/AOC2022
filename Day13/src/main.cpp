@@ -82,6 +82,11 @@ struct Token
     }
 };
 
+bool operator==(Token const& lhs, Token const& rhs)
+{
+    return lhs.type == rhs.type and lhs.val == rhs.val;
+}
+
 using Tokens = vector<Token>;
 
 str to_str(const Tokens& tokens)
@@ -314,24 +319,41 @@ void part_1()
 
 void part_2()
 {
-#if 1
+#if 0
     auto file_path = "res/test.txt";
 #else
     auto file_path = "res/input.txt";
 #endif
     cout << "[INFO] input file: " << file_path << endl;
-    auto ifs = std::ifstream(file_path);
 
-    if (not ifs.is_open())
-        throw std::runtime_error(str("[ERROR] Cannot open file ") + file_path);
+    str file = read_file(file_path);
 
-    str line;
-    while (std::getline(ifs, line))
+    auto pairs = split_by(file, "\n\n");
+    pairs.push_back("[[2]]\n[[6]]");
+
+    vector<Tokens> all_packets;
+
+    for (auto& pair : pairs)
     {
+        auto tmp = split_by(pair, "\n");
 
+        auto left = tokenize(tmp[0]);
+        auto right = tokenize(tmp[1]);
+
+        all_packets.push_back(std::move(left));
+        all_packets.push_back(std::move(right));
     }
 
-    cout << "[INFO] res part 2: " << endl;
+    std::sort(all_packets.begin(), all_packets.end(),
+              [](Tokens const& left, Tokens const& right)
+    {
+        return compare(parse(left), parse(right)) > 0;
+    });
+
+    auto first_packet = std::find(all_packets.begin(), all_packets.end(), tokenize("[[2]]")) - all_packets.begin();
+    auto second_packet = std::find(all_packets.begin(), all_packets.end(), tokenize("[[6]]"))- all_packets.begin();
+
+    cout << "[INFO] res part 2: " << (first_packet+1) * (second_packet+1) << endl;
 }
 
 int main()
