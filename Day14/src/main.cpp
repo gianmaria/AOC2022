@@ -62,8 +62,8 @@ str read_file(const char* file_path)
 
 
 
-constexpr auto HEIGHT = 1000;
-constexpr auto WIDTH = 1000;
+constexpr auto HEIGHT = 200;
+constexpr auto WIDTH = 700;
 
 char map[HEIGHT][WIDTH];
 constexpr char ROCK = '#';
@@ -103,6 +103,12 @@ void print_map()
         }
         ofs << endl;
     }
+    for (int x = 0;
+         x < WIDTH;
+         ++x)
+    {
+        ofs << AIR;
+    }
 }
 
 void draw_wall(int x1, int y1, int x2, int y2)
@@ -111,6 +117,9 @@ void draw_wall(int x1, int y1, int x2, int y2)
         std::swap(x1, x2);
     if (y1 > y2)
         std::swap(y1, y2);
+
+    assert(x2 < WIDTH);
+    assert(y2 < HEIGHT);
 
     if (x1 == x2)
     {
@@ -135,6 +144,9 @@ void draw_wall(int x1, int y1, int x2, int y2)
         assert(false);
     }
 }
+
+
+
 
 bool pour_sand()
 {
@@ -233,10 +245,67 @@ void part_1()
     {
         ++count;
     }
-    
+
     print_map();
 
     cout << "[INFO] res part 1: " << count << endl;
+}
+
+
+
+
+bool pour_sand_2(int bottom)
+{
+    int xs = 500;
+    int ys = 0;
+
+    bool sand_to_rest = false;
+    while (not sand_to_rest)
+    {
+        // try down
+        if (ys + 1 < bottom and
+            map[ys + 1][xs] != ROCK and
+            map[ys + 1][xs] != SAND)
+        {
+            ys += 1;
+        }
+
+        // try down left
+        else if (ys + 1 < bottom and
+                 xs - 1 >= 0 and
+                 map[ys + 1][xs - 1] != ROCK and
+                 map[ys + 1][xs - 1] != SAND)
+        {
+            ys += 1;
+            xs -= 1;
+        }
+
+        // try down right
+        else if (ys + 1 < bottom and
+                 xs + 1 < WIDTH and
+                 map[ys + 1][xs + 1] != ROCK and
+                 map[ys + 1][xs + 1] != SAND)
+        {
+            ys += 1;
+            xs += 1;
+        }
+
+        else
+        {
+            map[ys][xs] = SAND;
+            sand_to_rest = true;
+        }
+    }
+
+    if (xs == 500 and
+        ys == 0)
+    {
+        return false; // we reached the top
+    }
+    else
+    {
+        return true;
+    }
 }
 
 void part_2()
@@ -249,8 +318,53 @@ void part_2()
     cout << "[INFO] input file: " << file_path << endl;
 
     str file = read_file(file_path);
+    auto lines = split_by(file, "\n");
 
-    cout << "[INFO] res part 2: " << endl;
+    init_map();
+
+    int highest_y = 0;
+
+    for (const auto& line : lines)
+    {
+        auto coords = split_by(line, " -> ");
+
+        for (auto it = coords.begin();
+             it < coords.end() - 1;
+             ++it)
+        {
+            auto& coord = (*it);
+            auto& coord_next = *(it + 1);
+
+            auto xy = split_by(coord, ",");
+            auto xy_next = split_by(coord_next, ",");
+
+            int x1, y1, x2, y2;
+            x1 = std::stoi(xy[0]);
+            y1 = std::stoi(xy[1]);
+            x2 = std::stoi(xy_next[0]);
+            y2 = std::stoi(xy_next[1]);
+
+            if (y1 > highest_y)
+                highest_y = y1;
+            if (y2 > highest_y)
+                highest_y = y2;
+
+            draw_wall(x1, y1, x2, y2);
+        }
+    }
+
+    highest_y += 2;
+    draw_wall(0, highest_y, WIDTH - 1, highest_y);
+
+    int count = 0;
+    while (pour_sand_2(highest_y))
+    {
+        ++count;
+    }
+
+    print_map();
+
+    cout << "[INFO] res part 2: " << count + 1 << endl;
 }
 
 int main()
